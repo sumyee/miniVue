@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Vue</title>
+  <script src="../dist/mini-vue.js"></script>
+</head>
+<body>
+  <script>
+    // console.log(miniVue);
+    const vm = new miniVue({
+      el: '#app',
+      data() {
+        return {
+          msg: 123,
+          obj: {
+            a: 666
+          }
+        }
+      }
+    })
+
+    vm.msg = 233333
+    vm.obj.a = 11111
+
+    console.log("🚀 ~ file: index.html ~ line 23 ~ vm.msg", vm.msg)
+  </script>
+</body>
+</html>

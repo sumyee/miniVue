@@ -1,0 +1,29 @@
+{
+  "name": "mini-vue",
+  "version": "1.0.0",
+  "description": "手写Vue核心源码",
+  "main": "index.js",
+  "scripts": {
+    "serve": "rollup -c -w",
+    "build": "rollup -c",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumyee/miniVue.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sumyee/miniVue/issues"
+  },
+  "homepage": "https://github.com/sumyee/miniVue#readme",
+  "devDependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/preset-env": "^7.14.7",
+    "cross-env": "^7.0.3",
+    "rollup": "^2.52.6",
+    "rollup-plugin-babel": "^4.4.0"
+  }
+}
