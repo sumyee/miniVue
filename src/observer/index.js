@@ -48,6 +48,7 @@ export function defineReactive(obj, key, val) {
   });
 }
 
+// 观察数据
 export function observe(value) {
   if (isObject(value) || Array.isArray(value)) {
     return new Observe(value);

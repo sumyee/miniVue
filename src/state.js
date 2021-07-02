@@ -41,6 +41,7 @@ function initProps() {}
 
 function initMethods() {}
 
+// 初始化 data
 function initData(vm) {
   // 传入的 data
   let { data } = vm.$options;
@@ -55,7 +56,7 @@ function initData(vm) {
     }
   }
 
-  // 观测数据 -- 响应式数据核心
+  // 观察数据 -- 响应式数据核心
   observe(data);
 }
 

@@ -42,9 +42,21 @@
     return Constructor;
   }
 
+  /**
+   * 是否是对象
+   * @param {*} value 判断元素
+   * @returns Boolean
+   */
   function isObject(value) {
     return value !== null && _typeof(value) === 'object';
-  } // 定义属性
+  }
+  /**
+   * 定义一个属性
+   * @param {Object} obj 目标对象
+   * @param {String} key 定义的属性
+   * @param {*} val 初始值
+   * @param {*} enumerable 是否可枚举
+   */
 
   function def(obj, key, val, enumerable) {
     Object.defineProperty(obj, key, {
@@ -146,7 +158,8 @@
         console.log("\uD83D\uDE80 ~ \u8BBE\u7F6E\u503C ".concat(key), value);
       }
     });
-  }
+  } // 观察数据
+
   function observe(value) {
     if (isObject(value) || Array.isArray(value)) {
       return new Observe(value);
@@ -181,6 +194,7 @@
     if (opts.watch) ;
   }
 
+
   function initData(vm) {
     // 传入的 data
     var data = vm.$options.data;
@@ -191,18 +205,118 @@
       if (Object.hasOwnProperty.call(data, key)) {
         proxy(vm, '_data', key);
       }
-    } // 观测数据 -- 响应式数据核心
+    } // 观察数据 -- 响应式数据核心
 
 
     observe(data);
   }
 
+  /* eslint-disable no-unused-vars */
+
+  /* eslint-disable no-cond-assign */
+
+  /* eslint-disable no-useless-escape */
+  var ncname = '[a-zA-Z_][\\-\\.0-9_a-zA-Z]*'; // 匹配标签名
+
+  var qnameCapture = "((?:".concat(ncname, "\\:)?").concat(ncname, ")"); // 匹配特殊标签
+
+  var startTagOpen = new RegExp("^<".concat(qnameCapture)); // 匹配标签开始
+
+  var startTagClose = /^\s*(\/?)>/; // 匹配标签结束  >
+
+  var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 匹配属性
+  // 根节点，当前父节点
+
+  var root;
+
+
+  function parse(html) {
+    while (html) {
+      var textEnd = html.indexOf('<');
+
+      if (textEnd === 0) {
+        parseStartTag();
+      }
+    } // 匹配开始标签
+
+
+    function parseStartTag() {
+      var start = html.match(startTagOpen);
+
+      if (start) {
+        var match = {
+          tagName: start[1],
+          attrs: []
+        }; // 匹配到后，截取掉开始标签
+
+        advance(start[0].length);
+        var end;
+        var attr;
+
+        while (!(end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+          advance(attr[0].length);
+          attr = {
+            name: attr[1],
+            value: attr[3] || attr[4] || attr[5]
+          };
+          match.attrs.push(attr);
+        }
+
+        if (end) {
+          advance(1);
+          return match;
+        }
+      }
+    }
+
+    function advance(n) {
+      html = html.substring(n);
+    }
+
+    return root;
+  }
+
+  /**
+   * 模板转化
+   * @param {String} template 模板
+   */
+
+  function compileToFunctions(template) {
+    parse(template);
+  }
+
   function initMixin(Vue) {
+    // 初始化
     Vue.prototype._init = function (options) {
       var vm = this;
       vm.$options = options; // 初始化状态
 
       initState(vm);
+
+      if (vm.$options.el) {
+        this.$mount(vm.$options.el);
+      }
+    }; // 挂载
+
+
+    Vue.prototype.$mount = function (el) {
+      var vm = this;
+      var options = vm.$options;
+      el = document.querySelector(el); // 如果没有 render 属性
+
+      if (!options.render) {
+        var template = options.template; // 没有 render 和 template，但是存在 el，就把 el 外层 html 赋值给 template
+
+        if (!template && el) {
+          template = el.outerHTML;
+        } // 把 template 转化为 render 函数
+
+
+        if (template) {
+          var render = compileToFunctions(template);
+          options.render = render;
+        }
+      }
     };
   }
 
