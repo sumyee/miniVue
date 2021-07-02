@@ -42,11 +42,68 @@
     return Constructor;
   }
 
+  function isObject(value) {
+    return value !== null && _typeof(value) === 'object';
+  } // 定义属性
+
+  function def(obj, key, val, enumerable) {
+    Object.defineProperty(obj, key, {
+      value: val,
+      enumerable: !!enumerable,
+      configurable: true,
+      writable: true
+    });
+  }
+
+  var arrayProto = Array.prototype; // arrayMethods 继承数组原型
+
+  var arrayMethods = Object.create(arrayProto); // 拦截这 7 个会改变元数组的方法
+
+  var methodsToPatch = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']; // 拦截数组方法
+  // eslint-disable-next-line prefer-arrow-callback
+
+  methodsToPatch.forEach(function (method) {
+    var original = arrayProto[method];
+    def(arrayMethods, method, function () {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      var result = original.apply(this, args);
+      var ob = this.__ob__; // 数组有新增的元素
+
+      var inserted; // eslint-disable-next-line default-case
+
+      switch (method) {
+        case 'push':
+        case 'unshift':
+          inserted = args;
+          break;
+
+        case 'splice':
+          inserted = args.slice(2);
+          break;
+      } // 新增的元素 也进行响应式观测
+
+
+      if (inserted) ob.observeArray(inserted);
+      return result;
+    });
+  });
+
   var Observe = /*#__PURE__*/function () {
     function Observe(value) {
       _classCallCheck(this, Observe);
 
-      this.walk(value);
+      // 增加 __ob__ 属性
+      def(value, '__ob__', this);
+
+      if (Array.isArray(value)) {
+        value.__proto__ = arrayMethods;
+        this.observeArray(value);
+      } else {
+        this.walk(value);
+      }
     } // 对象
 
 
@@ -57,6 +114,14 @@
 
         for (var i = 0; i < keys.length; i++) {
           defineReactive(obj, keys[i], obj[keys[i]]);
+        }
+      } // 数组
+
+    }, {
+      key: "observeArray",
+      value: function observeArray(items) {
+        for (var i = 0; i < items.length; i++) {
+          observe(items[i]);
         }
       }
     }]);
@@ -83,7 +148,7 @@
     });
   }
   function observe(value) {
-    if (value !== null && _typeof(value) === 'object' || Array.isArray(value)) {
+    if (isObject(value) || Array.isArray(value)) {
       return new Observe(value);
     }
   }
@@ -96,7 +161,7 @@
         return target[sourceKey][key];
       },
       set: function set(val) {
-        return target[sourceKey][key] = val;
+        target[sourceKey][key] = val;
       }
     });
   }

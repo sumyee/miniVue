@@ -26,5 +26,6 @@ module.exports = {
     'consistent-return': 0, // 要求 return 语句要么总是指定返回的值，要么不指定
     'no-plusplus': 0, // 禁用一元操作符 ++ 和 --
     'no-console': 0,
+    'no-proto': 0,
   },
 };

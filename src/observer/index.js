@@ -1,6 +1,16 @@
+import { isObject, def } from '../utils/index';
+import { arrayMethods } from './array';
+
 class Observe {
   constructor(value) {
-    this.walk(value);
+    // 增加 __ob__ 属性
+    def(value, '__ob__', this);
+    if (Array.isArray(value)) {
+      value.__proto__ = arrayMethods;
+      this.observeArray(value);
+    } else {
+      this.walk(value);
+    }
   }
 
   // 对象
@@ -8,6 +18,13 @@ class Observe {
     const keys = Object.keys(obj);
     for (let i = 0; i < keys.length; i++) {
       defineReactive(obj, keys[i], obj[keys[i]]);
+    }
+  }
+
+  // 数组
+  observeArray(items) {
+    for (let i = 0; i < items.length; i++) {
+      observe(items[i]);
     }
   }
 }
@@ -32,7 +49,7 @@ export function defineReactive(obj, key, val) {
 }
 
 export function observe(value) {
-  if ((value !== null && typeof value === 'object') || Array.isArray(value)) {
+  if (isObject(value) || Array.isArray(value)) {
     return new Observe(value);
   }
 }
