@@ -6,7 +6,20 @@
   "scripts": {
     "serve": "rollup -c -w",
     "build": "rollup -c",
+    "lint": "eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "husky":{
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**": [
+        "prettier --write",
+        "eslint --fix",
+        "git add"
+    ]
   },
   "repository": {
     "type": "git",
@@ -23,6 +36,13 @@
     "@babel/core": "^7.14.6",
     "@babel/preset-env": "^7.14.7",
     "cross-env": "^7.0.3",
+    "eslint": "^7.29.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-vue": "^7.12.1",
+    "husky": "^7.0.0",
+    "lint-staged": "^11.0.0",
+    "prettier": "^2.3.2",
     "rollup": "^2.52.6",
     "rollup-plugin-babel": "^4.4.0"
   }
