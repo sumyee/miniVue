@@ -1,3 +1,4 @@
+/* eslint-disable no-continue */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-cond-assign */
 /* eslint-disable no-useless-escape */
@@ -6,8 +7,7 @@ const qnameCapture = `((?:${ncname}\\:)?${ncname})`; // 匹配特殊标签
 const startTagOpen = new RegExp(`^<${qnameCapture}`); // 匹配标签开始
 const startTagClose = /^\s*(\/?)>/; // 匹配标签结束  >
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`); // 匹配标签结尾
-const attribute =
-  /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 匹配属性
+const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 匹配属性
 
 // 根节点，当前父节点
 let root;
@@ -54,13 +54,51 @@ function handleEndTag(tagName) {
   }
 }
 
+// 处理文本
+function handleChars(text) {
+  // 去掉空格
+  text = text.replace(/\s/g, '');
+  if (text) {
+    currentParent.children.push({
+      type: TEXT_TYPE,
+      text,
+    });
+  }
+}
+
 //  将 HTML 字符串转换为 AST。
 export function parse(html) {
   while (html) {
+    // 查找 <
     const textEnd = html.indexOf('<');
 
+    // 如果 < 在第一个 证明接下来就是一个标签 不管是开始还是结束标签
     if (textEnd === 0) {
+      // 匹配开始标签
       const startTagMatch = parseStartTag();
+      if (startTagMatch) {
+        // 生成AST
+        handleStartTag(startTagMatch);
+        continue;
+      }
+
+      // 匹配结束标签
+      const endTagMatch = html.match(endTag);
+      if (endTagMatch) {
+        advance(endTagMatch[0].length);
+        handleEndTag(endTagMatch[1]);
+        continue;
+      }
+    }
+
+    // 文本
+    let text;
+    if (textEnd > -1) {
+      text = html.substring(0, textEnd);
+    }
+    if (text) {
+      advance(text.length);
+      handleChars(text);
     }
   }
 
@@ -81,13 +119,13 @@ export function parse(html) {
       let attr;
 
       while (
-        !(end = html.match(startTagClose)) &&
-        (attr = html.match(attribute))
+        !(end = html.match(startTagClose))
+        && (attr = html.match(attribute))
       ) {
         advance(attr[0].length);
         attr = {
           name: attr[1],
-          value: attr[3] || attr[4] || attr[5],
+          value: attr[3] || attr[4] || attr[5], // 这里是因为正则捕获支持双引号 单引号 和无引号的属性值
         };
         match.attrs.push(attr);
       }

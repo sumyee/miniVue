@@ -211,6 +211,8 @@
     observe(data);
   }
 
+  /* eslint-disable no-continue */
+
   /* eslint-disable no-unused-vars */
 
   /* eslint-disable no-cond-assign */
@@ -224,18 +226,104 @@
 
   var startTagClose = /^\s*(\/?)>/; // 匹配标签结束  >
 
+  var endTag = new RegExp("^<\\/".concat(qnameCapture, "[^>]*>")); // 匹配标签结尾
+
   var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 匹配属性
   // 根节点，当前父节点
 
   var root;
+  var currentParent; //
+
+  var stack = []; // 元素、文本 nodeType 值
+
+  var ELEMENT_TYPE = 1;
+  var TEXT_TYPE = 3; // 生成ast
+
+  function creatASTElement(tagName, attrs) {
+    return {
+      tag: tagName,
+      type: ELEMENT_TYPE,
+      children: [],
+      attrs: attrs,
+      parent: null
+    };
+  } // 处理开始标签
+
+
+  function handleStartTag(_ref) {
+    var tagName = _ref.tagName,
+        attrs = _ref.attrs;
+    var element = creatASTElement(tagName, attrs);
+
+    if (!root) {
+      root = element;
+    }
+
+    currentParent = element;
+    stack.push(element);
+  } // 处理结束标签
+
+
+  function handleEndTag(tagName) {
+    // 取出栈顶元素
+    var element = stack.pop();
+    currentParent = stack[stack.length - 1];
+
+    if (currentParent) {
+      element.parent = currentParent;
+      currentParent.children.push(element);
+    }
+  } // 处理文本
+
+
+  function handleChars(text) {
+    // 去掉空格
+    text = text.replace(/\s/g, '');
+
+    if (text) {
+      currentParent.children.push({
+        type: TEXT_TYPE,
+        text: text
+      });
+    }
+  } //  将 HTML 字符串转换为 AST。
 
 
   function parse(html) {
     while (html) {
-      var textEnd = html.indexOf('<');
+      // 查找 <
+      var textEnd = html.indexOf('<'); // 如果 < 在第一个 证明接下来就是一个标签 不管是开始还是结束标签
 
       if (textEnd === 0) {
-        parseStartTag();
+        // 匹配开始标签
+        var startTagMatch = parseStartTag();
+
+        if (startTagMatch) {
+          // 生成AST
+          handleStartTag(startTagMatch);
+          continue;
+        } // 匹配结束标签
+
+
+        var endTagMatch = html.match(endTag);
+
+        if (endTagMatch) {
+          advance(endTagMatch[0].length);
+          handleEndTag(endTagMatch[1]);
+          continue;
+        }
+      } // 文本
+
+
+      var text = void 0;
+
+      if (textEnd > -1) {
+        text = html.substring(0, textEnd);
+      }
+
+      if (text) {
+        advance(text.length);
+        handleChars(text);
       }
     } // 匹配开始标签
 
@@ -257,7 +345,8 @@
           advance(attr[0].length);
           attr = {
             name: attr[1],
-            value: attr[3] || attr[4] || attr[5]
+            value: attr[3] || attr[4] || attr[5] // 这里是因为正则捕获支持双引号 单引号 和无引号的属性值
+
           };
           match.attrs.push(attr);
         }
@@ -282,7 +371,8 @@
    */
 
   function compileToFunctions(template) {
-    parse(template);
+    var ast = parse(template);
+    console.log(ast);
   }
 
   function initMixin(Vue) {

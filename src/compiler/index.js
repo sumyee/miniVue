@@ -5,5 +5,6 @@ import { parse } from './parse';
  * @param {String} template 模板
  */
 export function compileToFunctions(template) {
-  parse(template);
+  const ast = parse(template);
+  console.log(ast);
 }
